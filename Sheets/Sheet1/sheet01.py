@@ -38,6 +38,8 @@ def sum_image(image):
 
 
 def task1():
+    print("========================== Task 1 ==========================")
+
     # set image path
     img_path = 'bonn.png'
     # read img
@@ -92,11 +94,11 @@ def task1():
                         integral_img[top_left_y + 100, top_left_x]) / (100 * 100)
         integr_my_time += time.time() - start
 
-    print(f'Total time taken by sum:           {sum_time}')
-    print(f'Total time taken by integral (cv): {integr_cv_time}')
-    print(f'Total time taken by integral (my): {integr_my_time}')
+    print(f'Total time taken by sum:           {sum_time} sec.')
+    print(f'Total time taken by integral (cv): {integr_cv_time} sec.')
+    print(f'Total time taken by integral (my): {integr_my_time} sec.')
 
-
+    print("===========================================================\n")
 
 
 
@@ -105,13 +107,49 @@ def task1():
 # ************************************************
 # ********************TASK2***********************
 def equalize_hist_image(img):
-    # Your implementation of histogram equalization
-    pass
+    # get image shape
+    height, width = img.shape[:2]
+    # create empty image filled with zeros
+    equalized_img = np.zeros((height, width), np.uint64)
+    # Count the frequency of intensities
+    hist, bins = np.histogram(img.flatten(), 256, [0, 256], density=True)
+    # Compute integral histogram/CDF - representing the new intensity values
+    hist = np.cumsum(hist)
+    # Fill the new image -> replace old intensity values with new intensities taken from the integral histogram
+    for y in range(height):
+        for x in range(width):
+            equalized_img[y, x] = int(hist[img[y, x]] * 255.)
+
+    return equalized_img
 
 
 def task2():
-    # Your implementation of Task2
-    pass
+    print("========================== Task 2 ==========================")
+    # set image path
+    img_path = 'bonn.png'
+    # read img
+    img = cv.imread(img_path)
+    height, width = img.shape[:2]
+    # convert to grey
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+    equalized_img = cv.equalizeHist(img_gray)
+
+    plt.imshow(equalized_img)
+    plt.show()
+    display_image('2 - a - Image with the histogram equalization', equalized_img)
+
+    my_equalized_img = equalize_hist_image(img_gray)
+
+    plt.imshow(my_equalized_img)
+    plt.show()
+
+    diff_img = img_gray - equalized_img
+    plt.imshow(diff_img)
+    plt.show()
+
+
+
 # ************************************************
 # ********************TASK4***********************
 def get_kernel(sigma):
@@ -145,4 +183,5 @@ def task8():
     pass
 
 if __name__ == '__main__':
-    task1()
+    # task1()
+    task2()

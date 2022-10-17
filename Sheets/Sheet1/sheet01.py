@@ -148,6 +148,7 @@ def task2():
     plt.imshow(diff_img)
     plt.show()
 
+    print("===========================================================\n")
 
 
 # ************************************************
@@ -158,8 +159,21 @@ def get_kernel(sigma):
 
 
 def task4():
-    # Your implementation of Task4
-    pass
+    print("========================== Task 4 ==========================")
+    # set image path
+    img_path = 'bonn.png'
+    # read img
+    img = cv.imread(img_path)
+    height, width = img.shape[:2]
+    # convert to grey
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    # 4 - a - GaussianBlur
+    blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigmaX=2 * np.sqrt(2))
+    plt.imshow(blur_img_a)
+    plt.show()
+    # 4 - b - 
+
+    print("============================================================\n")
 # ************************************************
 # ********************TASK5***********************
 def task5():
@@ -184,4 +198,5 @@ def task8():
 
 if __name__ == '__main__':
     # task1()
-    task2()
+    # task2()
+    task4()

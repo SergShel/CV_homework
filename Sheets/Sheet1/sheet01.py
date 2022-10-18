@@ -17,15 +17,17 @@ def display_image(window_name, img):
 
 # ********************TASK1***********************
 def integral_image(img):
-    # get img height and width
-    height, width = img.shape
-    # initialize integral matrix with shape of img +1 col and +1 row with zeros
-    integral_img = np.zeros((height+1, width+1), np.uint64)
-    # iterate over all pixels in img with 2 for-loops
-    for y in range(1, height+1):
-        for x in range(1, width+1):
-            integral_img[y, x] = integral_img[y-1, x] + integral_img[y, x-1] - integral_img[y-1, x-1] + img[y-1, x-1]
-    return integral_img[1:, 1:]
+    """
+    Calculates unnormalized integral image
+    :param img: intensity image
+    :return: unnormalized integral image
+    """
+    integral_image = np.int32(cv.copyMakeBorder(img, top=1, bottom=0, left=1, right=0, borderType=cv.BORDER_CONSTANT, value=0))
+    height, width = img.shape[:2]
+    for y in range(height):
+        for x in range(width):
+            integral_image[y+1, x+1] = img[y, x] + integral_image[y+1, x] + integral_image[y, x+1] - integral_image[y, x]
+    return integral_image
 
 
 def sum_image(image):
@@ -53,50 +55,62 @@ def task1():
     plt.show()
     # display_image('1 - a - Integral Image', (integral_img / integral_img[-1, -1]))
 
+    # Task1_b
+    def dummy_mean(img):
+        pixel_num = img.shape[0] * img.shape[1]
+        return sum_image(img) / pixel_num
+
+    def my_integral_mean(img):
+        pixel_num = img.shape[0] * img.shape[1]
+        integral_img = integral_image(img)
+        bottom_right = integral_img[-1, -1]
+        top_left = integral_img[0, 0]
+        top_right = integral_img[0, -1]
+        bottom_left = integral_img[-1, 0]
+        return (bottom_right + top_left - bottom_left - top_right) / pixel_num
+
+    def integral_mean(img):
+        pixel_num = img.shape[0] * img.shape[1]
+        integral_img = cv.integral(img)
+        bottom_right = integral_img[-1, -1]
+        top_left = integral_img[0, 0]
+        top_right = integral_img[0, -1]
+        bottom_left = integral_img[-1, 0]
+        return (bottom_right + top_left - bottom_left - top_right) / pixel_num
+
+
     # 1 - b (i)
-    mean_grey_1 = sum_image(img_gray) / (height * width)
+    mean_grey_1 = dummy_mean(img_gray)
     print("Mean grey I  : ", mean_grey_1)
     # 1 - b (ii)
-    mean_grey_2 = cv.integral(img_gray)[-1, -1] / (height * width)
+    mean_grey_2 = integral_mean(img_gray)
     print("Mean grey III: ", mean_grey_2)
     # 1 - b (iii)
-    mean_grey_3 = integral_image(img_gray)[-1, -1] / (height * width)
+    mean_grey_3 = my_integral_mean(img_gray)
     print("Mean grey II : ", mean_grey_3)
     print("\n")
 
-    # 1 - c
-    sum_time = 0
-    integr_cv_time = 0
-    integr_my_time = 0
-    for i in range(10):
-        # generate random coords for top left corner of 100x100-patch
-        top_left_x = np.random.randint(0, width-100)
-        top_left_y = np.random.randint(0, height-100)
-        # first method
-        start = time.time()
-        mean_grey_1_i = sum_image(img_gray[top_left_y: (top_left_y + 100), top_left_x: (top_left_x + 100)]) / (100 * 100)
-        sum_time += time.time() - start
+    # Task1_c
 
-        # second method
-        np_integr_img = cv.integral(img_gray)
-        start = time.time()
-        mean_grey_2_i = (np_integr_img[top_left_y + 100, top_left_x + 100] +
-                        np_integr_img[top_left_y, top_left_x] -
-                        np_integr_img[top_left_y, top_left_x + 100] -
-                        np_integr_img[top_left_y + 100, top_left_x]) / (100 * 100)
-        integr_cv_time += time.time() - start
+    def benchmark(image, mean_function, function_name, random_coordinates):
+        start = time.perf_counter()
+        for coordinate in random_coordinates:
+            square_patch = image[coordinate[0]: coordinate[0] + 100, coordinate[1]: coordinate[1] + 100]
+            # display_image("Test 100x100 patches", square_patch)  # uncomment the line to check the patches
+            mean = mean_function(square_patch)
 
-        # third method
-        start = time.time()
-        mean_grey_3_i = (integral_img[top_left_y + 100, top_left_x + 100] +
-                        integral_img[top_left_y, top_left_x] -
-                        integral_img[top_left_y, top_left_x + 100] -
-                        integral_img[top_left_y + 100, top_left_x]) / (100 * 100)
-        integr_my_time += time.time() - start
+        print(f"Runtime of the task with <{function_name}>: {time.perf_counter() - start} seconds")
 
-    print(f'Total time taken by sum:           {sum_time} sec.')
-    print(f'Total time taken by integral (cv): {integr_cv_time} sec.')
-    print(f'Total time taken by integral (my): {integr_my_time} sec.')
+    # generate 10 2D-coordinates of upper-left corner of 100x100 patches
+    random_coords = np.random.randint(low=[0, 0], high=[img.shape[0] - 100, img.shape[1] - 100], size=(10, 2))
+
+    # Bechmarking:
+    benchmark(image=img_gray, mean_function=dummy_mean, function_name="Nested for-loops mean",
+              random_coordinates=random_coords)
+    benchmark(image=img_gray, mean_function=my_integral_mean, function_name="My Integral mean",
+              random_coordinates=random_coords)
+    benchmark(image=img_gray, mean_function=integral_mean, function_name="CV2 Integral mean",
+              random_coordinates=random_coords)
 
     print("===========================================================\n")
 
@@ -197,6 +211,6 @@ def task8():
     pass
 
 if __name__ == '__main__':
-    # task1()
+    task1()
     # task2()
-    task4()
+    # task4()

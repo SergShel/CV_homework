@@ -134,7 +134,12 @@ def equalize_hist_image(img):
         for x in range(width):
             equalized_img[y, x] = int(hist[img[y, x]] * 255.)
 
-    return equalized_img
+    return equalized_img.astype(np.uint8)
+
+def error(im_1,im_2):
+    diff = cv.absdiff(im_1.astype("uint8"), im_2.astype("uint8"))
+    max_error = np.amax(diff)
+    return diff, max_error
 
 
 def task2():
@@ -162,14 +167,35 @@ def task2():
     plt.imshow(diff_img)
     plt.show()
 
+    abs_Error, maxError = error(my_equalized_img, img_gray)
+    print("abs Error: \n" + str(abs_Error) + "\n max Error: " + str(maxError))
+
+    # display_image('bonn grey', img_gray)
+    # display_image('bonn_equalizeHist', my_equalized_img)
+
     print("===========================================================\n")
 
 
 # ************************************************
 # ********************TASK4***********************
 def get_kernel(sigma):
-    # Your implementation of getGaussianKernel
-    pass
+
+    kernel_size = int(np.ceil(4 * sigma) + 1)
+    kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+    print(kernel_size)
+    kernel = np.zeros((kernel_size, kernel_size), dtype="float64")
+    # for x in range(0, kernel.shape[0]):
+    #     for y in range(0, kernel.shape[1]):
+    #         diff_x = 1 - x
+    #         diff_y = 1 - y
+    #         kernel[x][y] = (1 / ((sigma ** 2) * 2 * np.pi)) * np.exp(-1 * ((diff_x ** 2) + (diff_y ** 2)) / (2 * (sigma ** 2)))
+    #
+    # return kernel
+    for i in range(-(kernel_size // 2), (kernel_size // 2) + 1):
+        for j in range(-(kernel_size // 2), (kernel_size // 2) + 1):
+            kernel[i + (kernel_size // 2), j + (kernel_size // 2)] = np.exp(-0.5 * (i * i + j * j) / (sigma * sigma))
+    # return normalized kernel
+    return kernel / kernel.sum()
 
 
 def task4():
@@ -178,14 +204,18 @@ def task4():
     img_path = 'bonn.png'
     # read img
     img = cv.imread(img_path)
+    sigma = 2 * np.sqrt(2)
     height, width = img.shape[:2]
     # convert to grey
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # 4 - a - GaussianBlur
-    blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigmaX=2 * np.sqrt(2))
+    blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigmaX=sigma, sigmaY=sigma)
     plt.imshow(blur_img_a)
     plt.show()
-    # 4 - b - 
+    # 4 - b -
+    blur_img_b = cv.filter2D(img_gray, -1, get_kernel(sigma))
+    plt.imshow(blur_img_b)
+    plt.show()
 
     print("============================================================\n")
 # ************************************************
@@ -211,6 +241,6 @@ def task8():
     pass
 
 if __name__ == '__main__':
-    task1()
+    # task1()
     # task2()
-    # task4()
+    task4()

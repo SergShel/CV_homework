@@ -137,8 +137,8 @@ def equalize_hist_image(img):
     return equalized_img.astype(np.uint8)
 
 def error(im_1,im_2):
-    diff = cv.absdiff(im_1.astype("uint8"), im_2.astype("uint8"))
-    max_error = np.amax(diff)
+    diff = np.abs(np.subtract(im_1, im_2))
+    max_error = np.max(diff)
     return diff, max_error
 
 
@@ -179,12 +179,10 @@ def task2():
 # ************************************************
 # ********************TASK4***********************
 def get_kernel(sigma):
-
-    kernel_size = int(np.ceil(4 * sigma) + 1)
     kernel_size = int(2 * np.ceil(3 * sigma) + 1)
-    print(kernel_size)
+    # init 2D kernel filled with zeros
     kernel = np.zeros((kernel_size, kernel_size), dtype="float64")
-
+    # iterate over 2 dimensions and compute a value for every pixel with gaussian distribution
     for i in range(-(kernel_size // 2), (kernel_size // 2) + 1):
         for j in range(-(kernel_size // 2), (kernel_size // 2) + 1):
             kernel[i + (kernel_size // 2), j + (kernel_size // 2)] = np.exp(-0.5 * (i * i + j * j) / (sigma * sigma))
@@ -193,9 +191,12 @@ def get_kernel(sigma):
 
 def get_1D_kernel(sigma):
     kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+    # init 1D kernel filled with zeros
     kernel = np.zeros((kernel_size), dtype="float64")
+    # iterate over 1 dimension and compute a value for every pixel with gaussian distribution
     for i in range(-(kernel_size // 2), (kernel_size // 2) + 1):
         kernel[i + (kernel_size // 2)] = np.exp(-0.5 * (i * i) / (sigma * sigma))
+    # return normalized kernel
     return kernel / kernel.sum()
 
 
@@ -210,7 +211,7 @@ def task4():
     # convert to grey
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # 4 - a - GaussianBlur
-    blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigmaX=sigma, sigmaY=sigma)
+    blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigma)
     plt.imshow(blur_img_a)
     plt.show()
     # 4 - b -
@@ -220,18 +221,54 @@ def task4():
 
     #4 - c -
     one_d_kernel = get_1D_kernel(sigma=sigma)
-    print("my kernel:", one_d_kernel)
 
     blur_img_c = cv.sepFilter2D(img_gray, -1, one_d_kernel, one_d_kernel)
     plt.imshow(blur_img_c)
     plt.show()
 
+    # Compute the absolute pixel-wise difference between all pairs (there are three pairs) and print the maximum pixel
+    # error for each pair.
+    max_diff_1 = error(blur_img_a, blur_img_b)[1]
+    max_diff_2 = error(blur_img_a, blur_img_c)[1]
+    max_diff_3 = error(blur_img_c, blur_img_b)[1]
+    print(f"Max Difference between cv.GaussianBlur and cv.filter2D results: {max_diff_1}")
+    print(f"Max Difference between cv.GaussianBlur and cv.sepFilter2D results: {max_diff_2}")
+    print(f"Max Difference between cv.filter2D and cv.sepFilter2D results: {max_diff_3}")
+
     print("============================================================\n")
 # ************************************************
 # ********************TASK5***********************
 def task5():
-    # Your implementation of Task5
-    pass
+    print("========================== Task 4 ==========================")
+    # set image path
+    img_path = 'bonn.png'
+    # read img
+    img = cv.imread(img_path)
+    # convert to grey
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    plt.imshow(img_gray)
+    plt.show()
+
+    height, width = img.shape[:2]
+    sigma_a = 2
+    sigma_b = 2 * np.sqrt(2)
+
+    # Filter the image twice with a Gaussian kernel with sigma = 2
+    img_a = cv.GaussianBlur(img_gray, (0, 0), sigma_a)
+    img_a = cv.GaussianBlur(img_a, (0, 0), sigma_a)
+    # Filter the image once with a Gaussian kernel with sigma = 2 * np.sqrt(2)
+    img_b = cv.GaussianBlur(img_gray, (0, 0), sigma_b)
+    # display both results
+    plt.imshow(img_a)
+    plt.show()
+    plt.imshow(img_b)
+    plt.show()
+    #compute the absolute pixel-wise difference between the results, and print the maximum pixel error
+    max_diff = error(img_a, img_b)[1]
+    print(f"Max Difference : {max_diff}")
+
+
+
 # ************************************************
 # ********************TASK7***********************
 def add_salt_n_pepper_noise(img):
@@ -252,4 +289,5 @@ def task8():
 if __name__ == '__main__':
     # task1()
     # task2()
-    task4()
+    # task4()
+    task5()

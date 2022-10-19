@@ -167,8 +167,8 @@ def task2():
     plt.imshow(diff_img)
     plt.show()
 
-    abs_Error, maxError = error(my_equalized_img, img_gray)
-    print("abs Error: \n" + str(abs_Error) + "\n max Error: " + str(maxError))
+    abs_error, max_error = error(my_equalized_img, img_gray)
+    print("abs Error: \n" + str(abs_error) + "\n max Error: " + str(max_error))
 
     # display_image('bonn grey', img_gray)
     # display_image('bonn_equalizeHist', my_equalized_img)
@@ -184,17 +184,18 @@ def get_kernel(sigma):
     kernel_size = int(2 * np.ceil(3 * sigma) + 1)
     print(kernel_size)
     kernel = np.zeros((kernel_size, kernel_size), dtype="float64")
-    # for x in range(0, kernel.shape[0]):
-    #     for y in range(0, kernel.shape[1]):
-    #         diff_x = 1 - x
-    #         diff_y = 1 - y
-    #         kernel[x][y] = (1 / ((sigma ** 2) * 2 * np.pi)) * np.exp(-1 * ((diff_x ** 2) + (diff_y ** 2)) / (2 * (sigma ** 2)))
-    #
-    # return kernel
+
     for i in range(-(kernel_size // 2), (kernel_size // 2) + 1):
         for j in range(-(kernel_size // 2), (kernel_size // 2) + 1):
             kernel[i + (kernel_size // 2), j + (kernel_size // 2)] = np.exp(-0.5 * (i * i + j * j) / (sigma * sigma))
     # return normalized kernel
+    return kernel / kernel.sum()
+
+def get_1D_kernel(sigma):
+    kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+    kernel = np.zeros((kernel_size), dtype="float64")
+    for i in range(-(kernel_size // 2), (kernel_size // 2) + 1):
+        kernel[i + (kernel_size // 2)] = np.exp(-0.5 * (i * i) / (sigma * sigma))
     return kernel / kernel.sum()
 
 
@@ -215,6 +216,14 @@ def task4():
     # 4 - b -
     blur_img_b = cv.filter2D(img_gray, -1, get_kernel(sigma))
     plt.imshow(blur_img_b)
+    plt.show()
+
+    #4 - c -
+    one_d_kernel = get_1D_kernel(sigma=sigma)
+    print("my kernel:", one_d_kernel)
+
+    blur_img_c = cv.sepFilter2D(img_gray, -1, one_d_kernel, one_d_kernel)
+    plt.imshow(blur_img_c)
     plt.show()
 
     print("============================================================\n")

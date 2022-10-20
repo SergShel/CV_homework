@@ -143,15 +143,14 @@ def equalize_hist_image(img):
     height, width = img.shape[:2]
     # create empty image filled with zeros
     equalized_img = np.zeros((height, width), np.uint64)
-    # Count the frequency of intensities
-    hist, bins = np.histogram(img.flatten(), 256, [0, 256], density=True)
-    # Compute integral histogram/CDF - representing the new intensity values
+    # compute the histogram of img
+    hist, bin_edges = np.histogram(img.flatten(), bins=256, range=[0, 256], density=True)
+    # compute integral histogram
     hist = np.cumsum(hist)
-    # Fill the new image -> replace old intensity values with new intensities taken from the integral histogram
+    # iterate over all pixels and calculate new intensities from integral hist
     for y in range(height):
         for x in range(width):
             equalized_img[y, x] = int(hist[img[y, x]] * 255.)
-
     return equalized_img.astype(np.uint8)
 
 def error(im_1,im_2):
@@ -387,9 +386,9 @@ def task8():
     print("============================================================\n")
 
 if __name__ == '__main__':
-    task1()
+    # task1()
     task2()
-    task4()
-    task5()
-    task7()
-    task8()
+    # task4()
+    # task5()
+    # task7()
+    # task8()

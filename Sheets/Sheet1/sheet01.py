@@ -4,6 +4,17 @@ import random
 import time
 import matplotlib.pyplot as plt
 
+authors = ["Siarhei Sheludzko", "Marcel Melchers"]
+
+"""
+!!! Change show_in_window to True if You prefer to use cv2.imshow(..) instesd of matplotlib.pyplot.imshow(..)
+"""
+show_in_window = False
+
+"""
+!!! Comment/uncomment last 6 lines of the file to deselect/select tasks separately
+"""
+
 
 def display_image(window_name, img):
     """
@@ -11,9 +22,18 @@ def display_image(window_name, img):
     :param window_name: name of the window
     :param img: image object to display
     """
-    cv.imshow(window_name, img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    global show_in_window
+
+    if(show_in_window):
+        cv.imshow(window_name, img)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
+    else:
+        plt.imshow(img)
+        plt.title(window_name)
+        plt.show()
+
 
 # ********************TASK1***********************
 def integral_image(img):
@@ -51,9 +71,7 @@ def task1():
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # 1 - a calculate integral img
     integral_img = integral_image(img_gray)
-    plt.imshow(integral_img)
-    plt.show()
-    # display_image('1 - a - Integral Image', (integral_img / integral_img[-1, -1]))
+    display_image('1 - a - Integral Image', (integral_img / integral_img[-1, -1]))
 
     # Task1_b
     def dummy_mean(img):
@@ -148,27 +166,21 @@ def task2():
     img_path = 'bonn.png'
     # read img
     img = cv.imread(img_path)
-    height, width = img.shape[:2]
     # convert to grey
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     equalized_img = cv.equalizeHist(img_gray)
 
-    plt.imshow(equalized_img)
-    plt.show()
+
     display_image('2 - a - Image with the histogram equalization', equalized_img)
 
     my_equalized_img = equalize_hist_image(img_gray)
 
-    plt.imshow(my_equalized_img)
-    plt.show()
-
-    diff_img = img_gray - equalized_img
-    plt.imshow(diff_img)
-    plt.show()
+    display_image('2 - b - Image with my histogram equalization', my_equalized_img)
 
     abs_error, max_error = error(my_equalized_img, img_gray)
-    print("abs Error: \n" + str(abs_error) + "\n max Error: " + str(max_error))
+    # print("abs Error: \n" + str(abs_error) )
+    print("max Error: " + str(max_error))
 
     # display_image('bonn grey', img_gray)
     # display_image('bonn_equalizeHist', my_equalized_img)
@@ -212,19 +224,16 @@ def task4():
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # 4 - a - GaussianBlur
     blur_img_a = cv.GaussianBlur(img_gray, (0, 0), sigma)
-    plt.imshow(blur_img_a)
-    plt.show()
+    display_image('4 - a - Image with cv2.GaussianBlur', blur_img_a)
     # 4 - b -
     blur_img_b = cv.filter2D(img_gray, -1, get_kernel(sigma))
-    plt.imshow(blur_img_b)
-    plt.show()
+    display_image('4 - b - Image with cv2.filter2D and 2D kernel', blur_img_b)
 
     #4 - c -
     one_d_kernel = get_1D_kernel(sigma=sigma)
 
     blur_img_c = cv.sepFilter2D(img_gray, -1, one_d_kernel, one_d_kernel)
-    plt.imshow(blur_img_c)
-    plt.show()
+    display_image('4 - c - Image with cv2.sepFilter2D and 2 1D kernels', blur_img_c)
 
     # Compute the absolute pixel-wise difference between all pairs (there are three pairs) and print the maximum pixel
     # error for each pair.
@@ -246,8 +255,7 @@ def task5():
     img = cv.imread(img_path)
     # convert to grey
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    plt.imshow(img_gray)
-    plt.show()
+    display_image('5 - - Gray Image ', img_gray)
 
     height, width = img.shape[:2]
     sigma_a = 2
@@ -259,10 +267,8 @@ def task5():
     # Filter the image once with a Gaussian kernel with sigma = 2 * np.sqrt(2)
     img_b = cv.GaussianBlur(img_gray, (0, 0), sigma_b)
     # display both results
-    plt.imshow(img_a)
-    plt.show()
-    plt.imshow(img_b)
-    plt.show()
+    display_image('5 - a - twice with a Gaussian kernel with sigma=2', img_a)
+    display_image('5 - b - once with a Gaussian kernel with sigma=2 * np.sqrt(2)', img_b)
     #compute the absolute pixel-wise difference between the results, and print the maximum pixel error
     max_diff = error(img_a, img_b)[1]
     print(f"Max Difference : {max_diff}")
@@ -299,8 +305,7 @@ def task7():
     # convert to grey
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     noizy_img = add_salt_n_pepper_noise(img_gray)
-    plt.imshow(noizy_img)
-    plt.show()
+    display_image("7 - - Gray Image with 30% salt&papper", noizy_img)
 
     filter_size_arr = [1, 3, 5, 7, 9]
     filter_name_arr = ["Gaussian", "Median", "Bilateral"]
@@ -329,24 +334,62 @@ def task7():
 
     for i in range(3):
         print(f"Best filter size for {filter_name_arr[i]} filter: {best_filter_size_arr[i]}")
-        plt.imshow(best_filtered_img_arr[i])
-        plt.show()
-
-
-
-
-
+        display_image(f"Best result for {filter_name_arr[i]} filter with size={best_filter_size_arr[i]}",
+                      best_filtered_img_arr[i])
+    print("============================================================\n")
 
 
 # ************************************************
 # ********************TASK8***********************
 def task8():
-    # Your implementation of task 8
-    pass
+    print("========================== Task 8 ==========================")
+
+    img = cv.imread("bonn.png")
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    # display_image('2 - a - Original Image', img_gray)
+
+    # a
+    # create kernels
+    K1 = np.array([[0.0113, 0.0838, 0.0113], [0.0838, 0.6193, 0.0838], [0.0113, 0.0838, 0.0113]])
+    K2 = np.array([[-0.8984, 0.1472, 1.1410], [-1.9075, 0.1566, 2.1359], [-0.8659, 0.0573, 1.0337]])
+    # apply conv
+    img1 = cv.filter2D(src=img_gray, ddepth=-1, kernel=K1)
+    img2 = cv.filter2D(src=img_gray, ddepth=-1, kernel=K2)
+    # display images
+    display_image('Image after applying convolution K1-kernel', img1)
+    display_image('Image after applying convolution K2-kernel', img2)
+
+    # b
+    w, u, v = cv.SVDecomp(K1)
+
+    w2, u2, v2 = cv.SVDecomp(K2)
+
+    # If only the first singular value σ 0 is non-zero, kernel is separable
+    o1 = np.sqrt(w[0])
+    o2 = np.sqrt(w2[0])
+
+    vert1_kernel = o1 * u.T[0]
+    vert2_kernel = o2 * u2.T[0]
+
+    hor1_kernel = o1 * v[0]
+    hor2_kernel = o2 * v2[0]
+
+    im1 = cv.sepFilter2D(img_gray, -1, hor1_kernel, vert1_kernel, 12)
+    im2 = cv.sepFilter2D(img_gray, -1, hor2_kernel, vert2_kernel)
+
+    display_image('Image after applying convolution with separated K1-kernel', im1)
+    display_image('Image after applying convolution with separated K2-kernel', im2)
+    # c
+    diff1 = np.abs(im1 - img1)
+    diff2 = np.abs(im2 - img2)
+    print(f"max pixel error 1: {np.max(diff1)}")
+    print(f"max pixel error 2: {np.max(diff2)}")
+    print("============================================================\n")
 
 if __name__ == '__main__':
-    # task1()
-    # task2()
-    # task4()
-    # task5()
+    task1()
+    task2()
+    task4()
+    task5()
     task7()
+    task8()

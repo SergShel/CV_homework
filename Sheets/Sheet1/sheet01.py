@@ -239,7 +239,7 @@ def task4():
 # ************************************************
 # ********************TASK5***********************
 def task5():
-    print("========================== Task 4 ==========================")
+    print("========================== Task 5 ==========================")
     # set image path
     img_path = 'bonn.png'
     # read img
@@ -266,19 +266,77 @@ def task5():
     #compute the absolute pixel-wise difference between the results, and print the maximum pixel error
     max_diff = error(img_a, img_b)[1]
     print(f"Max Difference : {max_diff}")
-
+    print("============================================================\n")
 
 
 # ************************************************
 # ********************TASK7***********************
 def add_salt_n_pepper_noise(img):
-    # Your implementation of adding noise to the image
-    pass
+    img = img.astype(np.uint8)
+    height, width = img.shape[:2]
+    for i in range(height):
+        for j in range(width):
+            # 30% probability of noize
+            if np.random.uniform() < 0.3:
+                # I assume that salt and pepper are equaly probable
+                if np.random.uniform() < 0.5:
+                    img[i, j] = 0
+                else:
+                    img[i, j] = 255
+    return img
+
+def mean_distance(img_1, img_2):
+    return np.mean(np.abs(img_1 - img_2))
+
 
 
 def task7():
-    # Your implementation of task 7
-    pass
+    print("========================== Task 7 ==========================")
+    # set image path
+    img_path = 'bonn.png'
+    # read img
+    img = cv.imread(img_path)
+    # convert to grey
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    noizy_img = add_salt_n_pepper_noise(img_gray)
+    plt.imshow(noizy_img)
+    plt.show()
+
+    filter_size_arr = [1, 3, 5, 7, 9]
+    filter_name_arr = ["Gaussian", "Median", "Bilateral"]
+    # list to store best filtered imgs
+    best_filtered_img_arr = [None, None, None]
+    # list to store best mean distances, init with +inf
+    best_distance_arr = [np.inf, np.inf, np.inf]
+    best_filter_size_arr = [0, 0, 0]
+
+    for filer_size in filter_size_arr:
+        gauss_result = cv.GaussianBlur(noizy_img, (0, 0), filer_size)
+        median_result = cv.medianBlur(noizy_img, filer_size)
+        bilater_result = cv.bilateralFilter(noizy_img, -1, 1000.0, filer_size)
+        result_arr = [gauss_result, median_result, bilater_result]
+        distance_arr = [
+                        mean_distance(gauss_result, img_gray),
+                        mean_distance(median_result, img_gray),
+                        mean_distance(bilater_result, img_gray)
+                        ]
+        # print(distance_arr)
+        for k in range(3):
+            if best_distance_arr[k] > distance_arr[k]:
+                best_distance_arr[k] = distance_arr[k]
+                best_filtered_img_arr[k] = result_arr[k]
+                best_filter_size_arr[k] = filer_size
+
+    for i in range(3):
+        print(f"Best filter size for {filter_name_arr[i]} filter: {best_filter_size_arr[i]}")
+        plt.imshow(best_filtered_img_arr[i])
+        plt.show()
+
+
+
+
+
+
 
 # ************************************************
 # ********************TASK8***********************
@@ -290,4 +348,5 @@ if __name__ == '__main__':
     # task1()
     # task2()
     # task4()
-    task5()
+    # task5()
+    task7()

@@ -385,10 +385,11 @@ def task8():
     print(f"max pixel error 2: {np.max(diff2)}")
     print("============================================================\n")
 
+
 if __name__ == '__main__':
-    # task1()
+    task1()
     task2()
-    # task4()
-    # task5()
-    # task7()
-    # task8()
+    task4()
+    task5()
+    task7()
+    task8()

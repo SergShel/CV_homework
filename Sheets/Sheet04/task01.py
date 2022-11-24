@@ -22,6 +22,7 @@ def plot_snake(ax, V, fill='green', line='red', alpha=1, with_txt=False):
     if with_txt:
         for i, (x, y) in enumerate(V):
             ax.text(x, y, str(i))
+    return ax
 
 
 def load_data(fpath, radius):

@@ -28,10 +28,10 @@ def load_data():
 def get_contour(phi):
     """ get all points on the contour
     :param phi:
-    :return: [(x, y), (x, y), ....]  points on contour
+    :return: [(x, y), (x, y), ....]  points on contour        
     """
     eps = 1
-    A = (phi > -eps) * 1
+    A = (phi > -eps) * 1 
     B = (phi < eps) * 1
     D = (A - B).astype(np.int32)
     D = (D == 0) * 1

@@ -63,12 +63,10 @@ def calculate_external_energy(image):
     y_sobel = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
     E_ext = - (x_sobel ** 2 + y_sobel ** 2)
     # normalize the energy to [-1, 0]
-    E_ext = - E_ext / np.min(E_ext)
-    E_ext = E_ext.astype('float32')
+    E_ext = - E_ext / np.min(E_ext).astype(np.float32)
     E_ext = cv2.GaussianBlur(E_ext, (0, 0), 5)
-    E_ext = -E_ext / np.min(E_ext)
-    
-
+    # normalize the energy to [-1, 0]
+    E_ext = - E_ext / np.min(E_ext)
     return E_ext
 
 def calculate_elasticity_of_pair(node1, node2, dist):

@@ -16,7 +16,6 @@ class GaussianMixtureModel(object):
         self.weights = None
         self.means = None
         self.covariances = None
-        self.variances = None
         self.scores = None
         self.max_iter = max_iter
 
@@ -25,9 +24,8 @@ class GaussianMixtureModel(object):
         self.weights = np.array([1]) # dummy value
         means = np.mean(data, axis=0)
         self.means = np.array([means]) 
-        covariances = np.cov(data.T) # symmetric matrix
-        self.variances = np.array([covariances[0]])
-        self.covariances = covariances
+        self.covariances = np.cov(data.T) 
+
 
     def split(self):
         '''
@@ -39,7 +37,7 @@ class GaussianMixtureModel(object):
         self.weights = np.concatenate((self.weights, self.weights)) / 2
         # For each mean μk, generate two new means μk1=μk+eps·σk and μk2=μk−esp·σk.
         eps = 0.05 # let's epsilon be 0.05
-        new_means = self.means + eps * np.sqrt(self.variances)
+        new_means = self.means + eps * np.sqrt(np.array([self.covariances[0]]))
         self.means = np.concatenate((new_means, new_means))
         # Duplicate  the K diagonal  covariance  matrices  so  you  have  2K diagonal covariance matrices.
         # self.covariances = np.concatenate((self.covariances, self.covariances))  # I have some problems in Loglikelihood function, so I commented this line. But the results are still good.
@@ -50,9 +48,6 @@ class GaussianMixtureModel(object):
         Function implements the EM algorithm for fitting a Gaussian mixture model.
         '''
         for _ in range(self.max_iter):
-            # e_result = self.e_step(data)
-            # self.m_step(data, e_result)
-
             # E-step of the EM algorithm.
             loglikelihood = self.loglikelihood(data) + np.log(self.weights[:, None])
             e_result = np.exp(loglikelihood) / np.sum(np.exp(loglikelihood), axis=0)
@@ -60,23 +55,6 @@ class GaussianMixtureModel(object):
             # M-step of the EM algorithm.
             self.weights = np.sum(e_result, axis=1) / np.sum(e_result)
             self.means = e_result.dot(data) / np.sum(e_result, axis=1)[:, None]
-
-
-    def e_step(self, data):
-        '''
-        E-step of the EM algorithm.
-        '''
-        loglikelihood = self.loglikelihood(data) + np.log(self.weights[:, None])
-        result = np.exp(loglikelihood) / np.sum(np.exp(loglikelihood), axis=0)
-        return result
-
-    def m_step(self, data, e_result):
-        '''
-        M-step of the EM algorithm.
-        '''
-        self.weights = np.sum(e_result, axis=1) / np.sum(e_result)
-        self.means = e_result.dot(data) / np.sum(e_result, axis=1)[:, None]
-        
 
 
     def loglikelihood(self, data):
@@ -137,7 +115,7 @@ def display_image(window_name, img, window_1_name=None, img_1=None):
 
 if __name__ == '__main__':
 
-    image, foreground, background, height, width = read_image('Sheet06/data/cv_is_great.png')
+    image, foreground, background, height, width = read_image('data/cv_is_great.png')
 
     GMM = GaussianMixtureModel(2)
 

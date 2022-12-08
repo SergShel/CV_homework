@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pylab as plt
 
-observations = np.load('Sheet06\data\observations.npy')
+observations = np.load('data/observations.npy')
 
 
 def get_observation(t):
@@ -40,7 +40,7 @@ class KalmanFilter(object):
         K = np.matmul(np.matmul(sigma_plus, self.phi.T), np.linalg.inv(self.sigma_m + np.matmul(np.matmul(self.phi, sigma_plus), self.phi.T)))
 
         # State Update.  xt is the current observation 
-        self.state = mu_plus + np.matmul(K, (xt - np.matmul(self.phi, mu_plus)))   # TODO mu_m ????
+        self.state = mu_plus + np.matmul(K, (xt - np.matmul(self.phi, mu_plus)))  
 
         # Covariance Update.
         self.covariance = np.matmul((np.identity(self.state.shape[0]) - np.matmul(K, self.phi)), sigma_plus)  

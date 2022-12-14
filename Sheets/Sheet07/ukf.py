@@ -15,21 +15,65 @@ class UnscentedKalmanFilter(object):
         self.sigma_m = sigma_m
         self.state = None
         self.convariance = None
+        self.a_0 = 0
+        self.a_j = 0
+        self.D_w = 0
+        self.w_hat = None
 
         self.count = 0
         self.state_smoothed = []
 
     def init(self, init_state):
-        # to do
-        pass
+        self.state = init_state
+        self.w_hat = init_state
+        self.covariance = np.identity(init_state.shape[0]) * 10
+
+        self.a_0 = np.random.uniform(0, 1)
+        self.D_w = init_state.shape[0]
+        self.a_j = ((1 - self.a_0) / (2 * self.D_w))
+
+    def small_sigma(self, x):
+        if x == 0:
+            return 1
+        return 0
+
+    def f(self, x, e=np.array([0, 0])):
+        return np.array([x[0], x[0]*np.sin(x[0])]) + e
+
 
     def track(self, xt):
-        # to do
-        pass
+        self.w_hat = self.state.astype(np.float64) 
+        w_plus = self.f(self.w_hat)
+        mu_plus = np.zeros_like(self.w_hat)
+        Sigma_plus = np.zeros_like(self.covariance)
+
+
+        for j in range(self.D_w * 2 + 1):
+            mu_plus += self.a_j * w_plus
+            Sigma_plus += self.a_j * (w_plus - mu_plus) @ (w_plus - mu_plus).T + self.sigma_p
+
+        mu_x = np.zeros_like(self.w_hat)
+        Sigma_x = np.zeros_like(self.covariance)
+        for j in range(self.D_w * 2 + 1):
+            mu_x += self.a_j * self.f(self.w_hat)
+            Sigma_x += self.a_j * (self.f(self.w_hat) - mu_x) @ (self.f(self.w_hat) - mu_x).T + self.sigma_m
+
+        # Kalman gain now computed from particle
+        K = None
+        for j in range(self.D_w * 2 + 1):
+            
+            if K is None:
+                K = self.a_j * (np.array([self.w_hat - mu_plus])) @ (np.array([xt - mu_x])).T * np.linalg.inv(Sigma_x)
+            else:
+                K += self.a_j * (np.array([self.w_hat - mu_plus])) @ (np.array([xt - mu_x])).T * np.linalg.inv(Sigma_x)
+
+        # Measurement update
+        self.state = mu_plus + K @ (xt - mu_x)
+        self.covariance = Sigma_plus - K @ Sigma_x @ K.T
+
 
     def get_current_location(self):
-        # to do
-        pass
+        return self.state
 
 def perform_tracking(tracker):
     track = []
@@ -61,6 +105,7 @@ def main():
     tracker.init(init_state)
 
     track = perform_tracking(tracker)
+    print(track)
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)

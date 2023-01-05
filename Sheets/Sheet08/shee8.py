@@ -109,15 +109,108 @@ def task5(imFile = 'castle.jpeg'):
  
 #Image homography: implement the RANSAC algorithm then apply it to stitch the two images of Bonn's
 # Poppelsdorfer Schloss and then visualise the stitched image
+
+
 def task6():
-    pass
+
+
+    # Read the two images
+    image1 = cv2.imread("./data/task6/schloss1.jpeg")
+    image2 = cv2.imread('./data/task6/schloss2.jpeg')
     
+    # Convert the images to grayscale
+    gray1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+    # Detect keypoints and compute their descriptors
+    sift = cv2.SIFT_create()
+    keypoints1, descriptors1 = sift.detectAndCompute(gray1, None)
+    keypoints2, descriptors2 = sift.detectAndCompute(gray2, None)
+    
+    # BFMatcher with default params
+    bf = cv2.BFMatcher()
+    matches = bf.knnMatch(descriptors1,descriptors2, k=2)
+
+    
+    # Apply ratio test
+    good = []
+    for m,n in matches:
+        if m.distance < 0.75*n.distance:
+            good.append(m)
+ 
+    list_p1s = []
+    list_p2s = []
+    for match in good:
+        p1 = keypoints1[match.queryIdx]
+        p2 = keypoints2[match.trainIdx]
+        list_p1s.append(p1)
+        list_p2s.append(p2)
+
+    # Define the number of iterations and the threshold for inliers
+    num_iterations = 20
+    threshold = 0.00001
+
+    # Initialize the best homography matrix to an identity matrix
+    best_homography = np.eye(3, 3, dtype=np.float64)
+
+    # Initialize the inlier max count to zero
+    max_inlier_count = 0
+
+    # Repeat N times
+    for i in range(num_iterations):
+        # Randomly select four feature pairs
+        indices = np.random.randint(0, len(list_p1s) , size=4)
+
+        points1 = np.array([list_p1s[i].pt for i in indices])
+        points2 = np.array([list_p2s[i].pt for i in indices])
+
+        # Compute the homography matrix
+        homography, _ = cv2.findHomography(points1, points2)
+
+        # Compute the inliers by transforming the points in the first image and 
+        # computing the sum of squared distances between the points and their 
+        # mapped position in the second image
+        inliers = 0
+        for j in range(len(list_p1s)):
+            point1 = np.array([list_p1s[j].pt[0], list_p1s[j].pt[1], 1.0])
+            point2 = np.array([list_p2s[j].pt[0], list_p2s[j].pt[1], 1.0])
+            mapped_point = np.dot(homography, point1)
+            #mapped_point /= mapped_point[2]
+            error = point2 - mapped_point
+            error = np.sum(error * error)
+            
+            if error < threshold:
+                inliers += 1
+
+        # Update the best homography matrix and the inlier max count if a 
+        # larger inlier count is found
+        if inliers > max_inlier_count:
+            max_inlier_count = inliers
+            best_homography = homography
+    print(best_homography)
+    print(max_inlier_count)
+
+    # Get the size of the output image
+    #height, width = image1.shape[:2]
+    #height2, width2 = image2.shape[:2]
+   
+    # Transform the first image to align with the second image
+    dst = cv2.warpPerspective(image1, best_homography, (image2.shape[1], image2.shape[0])) #wraped image
+
+    # now paste them together
+    #dst[0:image1.shape[0], 0:image1.shape[1]] = image1
+ 
+
+    # Save the output image to a file or display it using OpenCV's GUI functions
+    cv2.imwrite('output_image.jpg', dst)
+
+
 
 if __name__ == "__main__":
-    handModel = task1()
-    task2(handModel)
-    task3()
-    task4()
-    task5()
+    #handModel = task1()
+    #task2(handModel)
+    #task3()
+    #task4()
+    #task5()
     task6()
     

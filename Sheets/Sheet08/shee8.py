@@ -127,12 +127,12 @@ def task6():
     keypoints1, descriptors1 = sift.detectAndCompute(gray1, None)
     keypoints2, descriptors2 = sift.detectAndCompute(gray2, None)
     
+    # the part  for  matching line 133 - 139 i used from the docs
+    #https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_matcher/py_matcher.html
     # BFMatcher with default params
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(descriptors1,descriptors2, k=2)
 
-    
-    # Apply ratio test
     good = []
     for m,n in matches:
         if m.distance < 0.75*n.distance:
@@ -175,7 +175,7 @@ def task6():
             point1 = np.array([list_p1s[j].pt[0], list_p1s[j].pt[1], 1.0])
             point2 = np.array([list_p2s[j].pt[0], list_p2s[j].pt[1], 1.0])
             mapped_point = np.dot(homography, point1)
-            #mapped_point /= mapped_point[2]
+           
             error = point2 - mapped_point
             error = np.sum(error * error)
             
@@ -187,22 +187,20 @@ def task6():
         if inliers > max_inlier_count:
             max_inlier_count = inliers
             best_homography = homography
-    print(best_homography)
-    print(max_inlier_count)
+    print(f"final homography: {best_homography}")
+    print(f"max inlier found: {max_inlier_count}")
 
     # Get the size of the output image
-    #height, width = image1.shape[:2]
-    #height2, width2 = image2.shape[:2]
+    height, width = image1.shape[:2]
+   
    
     # Transform the first image to align with the second image
-    dst = cv2.warpPerspective(image1, best_homography, (image2.shape[1], image2.shape[0])) #wraped image
-
-    # now paste them together
-    #dst[0:image1.shape[0], 0:image1.shape[1]] = image1
- 
+    transformed = cv2.warpPerspective(image1, best_homography, ( 900,height)) #wraped image
+    #900 is the finall value for width of the transformed pciture
+    image2[0:height,0:900] = transformed
 
     # Save the output image to a file or display it using OpenCV's GUI functions
-    cv2.imwrite('output_image.jpg', dst)
+    cv2.imwrite('output_image.jpg', image2)
 
 
 

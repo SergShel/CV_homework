@@ -14,6 +14,7 @@ def load_FLO_file(filename):
     h = np.fromfile(flo_file, np.int32, count=1)
     data = np.fromfile(flo_file, np.float32, count=2*w[0]*h[0])
     flow = np.resize(data, (int(h[0]), int(w[0]), 2))
+    print(flow.shape)
     flo_file.close()
     return flow
 
@@ -55,8 +56,46 @@ class OpticalFlow:
     # implement Lucas-Kanade Optical Flow 
     # returns the Optical flow based on the Lucas-Kanade algorithm and visualisation result
     def Lucas_Kanade_flow(self):
-        flow = None
+        flow_x = np.zeros((self.Ix.shape[0],self.Ix.shape[1]))
+        flow_y = np.zeros((self.Ix.shape[0],self.Ix.shape[1]))
+        #M
+        M = np.zeros((2,2))
+        b = np.zeros((2,))
+        # Kernel for summation, we have 25 x25 window
+        kernel = np.ones((25,25))
 
+        
+        #create the entries for the M matric each pixel and b
+        xy = self.Ix * self.Iy
+        xx = self.Ix * self.Ix
+        yy = self.Iy * self.Iy
+
+        yt = self.Iy * self.It
+        xt = self.Ix * self.It
+        
+        xy_sum = cv.filter2D(src= xy, ddepth=-1, kernel=kernel)
+        xx_sum = cv.filter2D(src=xx, ddepth=-1, kernel=kernel)
+        yy_sum = cv.filter2D(src=yy, ddepth=-1, kernel=kernel)
+
+        xt_sum = cv.filter2D(src=xt, ddepth=-1, kernel=kernel)
+        yt_sum = cv.filter2D(src=yt, ddepth=-1, kernel=kernel)
+
+        
+        for (x, y), element in np.ndenumerate(flow_x):
+            M[0][0] = xx_sum[x,y]
+            M[1][0] = xy_sum[x,y]
+            M[0][1] = xy_sum[x,y]
+            M[1][1] = yy_sum[x,y]
+
+            b[0] = xt_sum[x,y]
+            b[0] = yt_sum[x,y]
+
+            s = np.linalg.solve(M,b)
+            flow_x[x,y] = s[0]
+            flow_y[x,y] = s[1]
+
+            #print(x)
+        flow = np.dstack((flow_x,flow_y))
         flow_bgr = self.flow_map_to_bgr(flow)
         return flow, flow_bgr
 
@@ -96,6 +135,7 @@ class OpticalFlow:
 
 
 if __name__ == "__main__":
+
 
     data_list = [
         'data/frame_0001.png',

@@ -146,12 +146,14 @@ class OpticalFlow:
 
         x_flow = flow[:, :, 0]
         y_flow = flow[:, :, 1]
-        
+        angle= (((np.arctan2(x_flow , y_flow) * 180) / np.pi) / 360) * 127
+        angle = np.where(angle > 0.0 , angle, np.abs(angle) + 128)
 
-        x_flow_color = cv.applyColorMap(np.uint8(x_flow * 255), cv.COLORMAP_HSV)
-        y_flow_color = cv.applyColorMap(np.uint8(y_flow * 255), cv.COLORMAP_HSV)
+
+        x_flow_color = cv.applyColorMap(np.uint8(x_flow * 255), cv.COLOR_GRAY2BGR)
+        y_flow_color = cv.applyColorMap(np.uint8(y_flow * 255), cv.COLOR_GRAY2BGR)
         #what should we do with the 3rd color ?
-        z_color =  cv.applyColorMap(np.uint8( np.sqrt(y_flow**2+x_flow**2) * 255), cv.COLORMAP_HSV)
+        z_color =  cv.applyColorMap(np.uint8( angle), cv.COLOR_GRAY2BGR)
 
         bgr_image = np.zeros((h, w, 3), dtype=np.uint8)
         bgr_image[:, :, 0] = y_flow_color[:, :, 0]

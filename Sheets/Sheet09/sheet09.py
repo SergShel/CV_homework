@@ -87,8 +87,8 @@ class OpticalFlow:
             M[0][1] = xy_sum[x,y]
             M[1][1] = yy_sum[x,y]
 
-            b[0] = xt_sum[x,y]
-            b[0] = yt_sum[x,y]
+            b[0] = xt_sum[x,y] * -1
+            b[1] = yt_sum[x,y] * - 1
 
             s = np.linalg.solve(M,b)
             flow_x[x,y] = s[0]
@@ -96,6 +96,7 @@ class OpticalFlow:
 
             #print(x)
         flow = np.dstack((flow_x,flow_y))
+       
         flow_bgr = self.flow_map_to_bgr(flow)
         return flow, flow_bgr
 
@@ -112,6 +113,14 @@ class OpticalFlow:
     #calculate the angular error here
     # return average angular error and per point error map
     def calculate_angular_error(self, estimated_flow, groundtruth_flow):
+        u_groundtruth_flow = groundtruth_flow[:, :, 0]
+        u_estimated_flow = estimated_flow[:, :, 0]
+        v_groundtruth_flow = groundtruth_flow[:, :, 1]
+        v_estimated_flow = estimated_flow[:, :, 1]
+        uu = u_groundtruth_flow * u_estimated_flow
+        vv = u_groundtruth_flow * u_estimated_flow
+        sum = uu + vv
+        sum += 1
         aae = None
         aae_per_point = None
         return aae, aae_per_point
@@ -129,9 +138,27 @@ class OpticalFlow:
     # function for converting flow map to to BGR image for visualisation
     # return bgr image
     def flow_map_to_bgr(self, flow):
-        flow_bgr = None
+        if flow is None:
+            return flow
+        h, w = flow.shape[:2]
+        #normalize
+        flow = flow / np.max(flow)
 
-        return flow_bgr
+        x_flow = flow[:, :, 0]
+        y_flow = flow[:, :, 1]
+        
+
+        x_flow_color = cv.applyColorMap(np.uint8(x_flow * 255), cv.COLORMAP_HSV)
+        y_flow_color = cv.applyColorMap(np.uint8(y_flow * 255), cv.COLORMAP_HSV)
+        #what should we do with the 3rd color ?
+        z_color =  cv.applyColorMap(np.uint8( np.sqrt(y_flow**2+x_flow**2) * 255), cv.COLORMAP_HSV)
+
+        bgr_image = np.zeros((h, w, 3), dtype=np.uint8)
+        bgr_image[:, :, 0] = y_flow_color[:, :, 0]
+        bgr_image[:, :, 1] = x_flow_color[:, :, 1]
+        bgr_image[:, :, 2] = z_color[:, :, 2]
+        
+        return bgr_image
 
 
 if __name__ == "__main__":
@@ -162,19 +189,22 @@ if __name__ == "__main__":
         aee_lucas_kanade, aee_lucas_kanade_per_point = Op.calculate_endpoint_error(flow_lucas_kanade, groundtruth_flow)
 
 
-        flow_horn_schunck, flow_horn_schunck_bgr = Op.Horn_Schunck_flow()
-        aae_horn_schunk, aae_horn_schunk_per_point = Op.calculate_angular_error(flow_horn_schunck, groundtruth_flow) 
-        aee_horn_schunk, aee_horn_schunk_per_point = Op.calculate_angular_error(flow_horn_schunck, groundtruth_flow)        
+        #flow_horn_schunck, flow_horn_schunck_bgr = Op.Horn_Schunck_flow()
+        #aae_horn_schunk, aae_horn_schunk_per_point = Op.calculate_angular_error(flow_horn_schunck, groundtruth_flow) 
+        #aee_horn_schunk, aee_horn_schunk_per_point = Op.calculate_angular_error(flow_horn_schunck, groundtruth_flow)        
        
 
 
         flow_bgr_gt = Op.flow_map_to_bgr(groundtruth_flow)
 
-        fig = plt.figure(figsize=(img.shape))
+        #fig = plt.figure(figsize=(img.shape))
 
         # Implement vizualization below  
-        # Your functions here  
-        # plt.show()
+        # Your functions here
+        #print(flow_lucas_kanade_bgr.shape)
+        #plt.imshow(Op.flow_map_to_bgr(groundtruth_flow))
+        plt.imshow(flow_lucas_kanade_bgr)
+        plt.show()
 
         print("*"*20)
 

@@ -14,3 +14,6 @@ Content:
 * [Sheet08](Sheets/Sheet08) -  Statistical Shape Modeling, Eigenfaces, Corner Detectors, Keypoint Matching, RANSAC for homography
 * [Sheet09](Sheets/Sheet09) -  Optical flow
 * [Sheet10](Sheets/Sheet10) -  SIFT, Triangualtion
+
+
+Every folder contains a pdf-file with the tasks description

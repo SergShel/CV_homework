@@ -19,8 +19,37 @@ def display_correspondences(im1,im2,corr1,corr2):
     cv2.imshow('Image 2', im2), cv2.waitKey(0), cv2.destroyAllWindows()
     return
 
+def normalize_points(points):
+    """Normalize 2D points using a similarity transformation."""
+    # Calculate the centroid of the points
+    centroid = np.mean(points, axis=0)
+    # Shift the points so that the centroid is at the origin
+    shift = points - centroid
+    # Scale the points so that the average distance from the centroid is sqrt(2)
+    scale = np.sqrt(2) / np.mean(np.linalg.norm(shift, axis=1))
+    T = np.array([[scale, 0, -scale*centroid[0]],
+                  [0, scale, -scale*centroid[1]],
+                  [0, 0, 1]])
+    return np.dot(T, np.hstack((points, np.ones((points.shape[0], 1)))).T).T[:, :2], T
+
 def computeFundMat(im1,im2,corr1,corr2):
-    fundMat = np.zeros((3,3))
+    """Compute the fundamental matrix using the normalized 8-point algorithm."""
+    # Normalize the points
+    norm_points1, T1 = normalize_points(corr1)
+    norm_points2, T2 = normalize_points(corr2)
+    # Build the matrix A from the normalized points
+    A = np.array([[norm_points1[i, 0]*norm_points2[i, 0], norm_points1[i, 0]*norm_points2[i, 1], norm_points1[i, 0]] for i in range(points1.shape[0])] +
+                 [[norm_points1[i, 1]*norm_points2[i, 0], norm_points1[i, 1]*norm_points2[i, 1], norm_points1[i, 1]] for i in range(points1.shape[0])])
+    # Compute the SVD of A
+    u, s, v = np.linalg.svd(A)
+    # The fundamental matrix is the last column of V normalized
+    fundMat = v[-1].reshape(3, 3)
+    # Enforce rank 2 constraint
+    u, s, v = np.linalg.svd(F)
+    s[-1] = 0
+    fundMat = np.dot(u, np.dot(np.diag(s), v))
+    # Denormalize the fundamental matrix
+    fundMat = np.dot(np.dot(T1.T, fundMat), T2)
 
     return fundMat
 
